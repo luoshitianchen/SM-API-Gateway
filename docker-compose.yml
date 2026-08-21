@@ -1,0 +1,12 @@
+services:
+  app:
+    build: .
+    ports: ["127.0.0.1:8310:8310"]
+    environment:
+      SM_ALLOWED_HOSTS: app,localhost,127.0.0.1
+    restart: unless-stopped
+    read_only: true
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=32m"]
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: ["ALL"]
+    pids_limit: 100
