@@ -36,3 +36,10 @@ uvicorn app.main:app --reload --port 8310
 ## v1.1 链路联动升级
 - 新增 `/api/integration/manifest`，向融合门户和治理系统声明服务依赖、事件类型、健康探针、指标接口和概览接口。
 - 版本升级到 `1.1.0`，用于后续统一身份、审计、监控、CMDB 和 AgentOps 的真实链路调用。
+
+
+## v2.0 大版本安全升级
+- 新增全局请求体大小限制 `SM_MAX_REQUEST_BYTES`。
+- 新增全局接口速率限制 `SM_RATE_WINDOW_SECONDS` / `SM_RATE_MAX_REQUESTS`。
+- 新增可选内部写入令牌 `SM_INTERNAL_API_KEY`，配置后 `POST/PATCH` 写操作必须携带 `X-Internal-Token`。
+- 服务契约 `/api/integration/manifest` 版本同步升级到 `2.0.0`。
