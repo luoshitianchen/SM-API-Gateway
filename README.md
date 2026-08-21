@@ -31,3 +31,8 @@ uvicorn app.main:app --reload --port 8310
 ```powershell
 .\quality.ps1
 ```
+
+
+## v1.1 链路联动升级
+- 新增 `/api/integration/manifest`，向融合门户和治理系统声明服务依赖、事件类型、健康探针、指标接口和概览接口。
+- 版本升级到 `1.1.0`，用于后续统一身份、审计、监控、CMDB 和 AgentOps 的真实链路调用。

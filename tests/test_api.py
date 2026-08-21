@@ -8,7 +8,7 @@ def test_health_and_security_headers():
         assert response.status_code == 200
         assert response.headers['X-Request-Id'] == 'suite-test'
         assert response.headers['X-Frame-Options'] == 'DENY'
-        assert response.json()['version'] == '1.0.0'
+        assert response.json()['version'] == '1.1.0'
 
 
 def test_overview_and_item_lifecycle():
@@ -28,3 +28,15 @@ def test_ops_metrics():
         metrics = client.get('/api/ops/metrics')
         assert metrics.status_code == 200
         assert metrics.json()['requests_total'] >= 1
+
+
+
+def test_integration_manifest_contract():
+    with TestClient(app) as client:
+        response = client.get('/api/integration/manifest')
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload['service']
+        assert payload['version'] == '1.1.0'
+        assert '/api/ops/metrics' == payload['metrics_path']
+        assert isinstance(payload['dependencies'], list)
