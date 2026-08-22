@@ -11,7 +11,7 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
-VERSION = "2.0.0"
+VERSION = "2.1.0"
 SERVICE_NAME = "sm-api-gateway"
 DISPLAY_NAME = "SM API Gateway"
 DESCRIPTION = "企业 API 网关：鉴权、限流、熔断、灰度与请求审计"
@@ -175,3 +175,22 @@ def crypto_sm3(payload: dict[str, str]) -> dict[str, str]:
 @app.get("/api/crypto/status")
 def crypto_status() -> dict[str, object]:
     return {"algorithm": "SM3/SM4", "sm3": "enabled", "sm4": "enabled", "key_source": "SM4_KEY_HEX environment"}
+
+
+@app.get("/api/security/baseline")
+def security_baseline() -> dict[str, object]:
+    return {
+        "service": SERVICE_NAME,
+        "version": VERSION,
+        "controls": {
+            "trusted_host": True,
+            "security_headers": True,
+            "csp": True,
+            "rate_limit": True,
+            "request_size_limit": True,
+            "sm3": True,
+            "sm4": True,
+            "internal_token": bool(INTERNAL_API_KEY),
+        },
+        "recommended": ["OIDC/MFA", "KMS/HSM", "centralized audit", "OpenTelemetry"],
+    }

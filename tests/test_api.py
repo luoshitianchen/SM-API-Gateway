@@ -8,7 +8,7 @@ def test_health_and_security_headers():
         assert response.status_code == 200
         assert response.headers['X-Request-Id'] == 'suite-test'
         assert response.headers['X-Frame-Options'] == 'DENY'
-        assert response.json()['version'] == '2.0.0'
+        assert response.json()['version'] == '2.1.0'
 
 
 def test_overview_and_item_lifecycle():
@@ -37,7 +37,7 @@ def test_integration_manifest_contract():
         assert response.status_code == 200
         payload = response.json()
         assert payload['service']
-        assert payload['version'] == '2.0.0'
+        assert payload['version'] == '2.1.0'
         assert '/api/ops/metrics' == payload['metrics_path']
         assert isinstance(payload['dependencies'], list)
 
@@ -75,3 +75,12 @@ def test_sm3_crypto_endpoint():
         assert response.json()['algorithm'] == 'SM3'
         assert len(response.json()['digest']) == 64
         assert client.get('/api/crypto/status').json()['sm4'] == 'enabled'
+
+
+
+def test_security_baseline():
+    with TestClient(app) as client:
+        payload = client.get('/api/security/baseline').json()
+        assert payload['controls']['sm3'] is True
+        assert payload['controls']['sm4'] is True
+        assert payload['controls']['rate_limit'] is True

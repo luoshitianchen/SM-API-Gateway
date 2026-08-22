@@ -50,3 +50,9 @@ uvicorn app.main:app --reload --port 8310
 - 提供 `/api/crypto/status` 国密能力状态。
 - SM4 密钥通过 `SM4_KEY_HEX` 环境变量注入，不写入代码和仓库。
 - 生产环境建议通过 KMS/HSM 注入 16 字节 SM4 密钥。
+
+
+## v2.1 平台重建升级
+- 新增 `/api/security/baseline` 安全基线接口。
+- 统一输出 TrustedHost、CSP、限流、请求体限制、SM3、SM4 和内部令牌状态。
+- 增加 Kubernetes 安全部署建议，生产环境建议使用非 root、只读文件系统、seccomp 和能力剥离。
