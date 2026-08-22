@@ -3,3 +3,4 @@ uvicorn[standard]==0.34.3
 pydantic==2.10.6
 pytest==9.1.1
 httpx==0.28.1
+gmssl==3.2.2

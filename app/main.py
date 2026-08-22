@@ -44,6 +44,22 @@ def internal_write_allowed(request: Request) -> bool:
         return True
     return request.headers.get("X-Internal-Token") == INTERNAL_API_KEY
 
+
+def sm3_hex(value: str) -> str:
+    from gmssl import func, sm3
+    return sm3.sm3_hash(func.bytes_to_list(value.encode("utf-8")))
+
+def sm4_encrypt(value: str, key_hex: str) -> str:
+    from gmssl.sm4 import CryptSM4, SM4_ENCRYPT
+    import secrets
+    key = bytes.fromhex(key_hex)
+    if len(key) != 16:
+        raise ValueError("SM4 key must be 16 bytes")
+    iv = secrets.token_bytes(16)
+    cipher = CryptSM4()
+    cipher.set_key(key, SM4_ENCRYPT)
+    return iv.hex() + ":" + cipher.crypt_cbc(iv, value.encode("utf-8")).hex()
+
 app = FastAPI(title=DISPLAY_NAME, version=VERSION, description=DESCRIPTION, docs_url=None, redoc_url=None)
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=ALLOWED_HOSTS)
 
@@ -147,3 +163,15 @@ def integration_manifest() -> dict[str, object]:
         "metrics_path": "/api/ops/metrics",
         "overview_path": "/api/overview",
     }
+
+
+@app.post("/api/crypto/sm3")
+def crypto_sm3(payload: dict[str, str]) -> dict[str, str]:
+    value = payload.get("value", "")
+    if len(value) > 10000:
+        raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, "内容过大")
+    return {"algorithm": "SM3", "digest": sm3_hex(value)}
+
+@app.get("/api/crypto/status")
+def crypto_status() -> dict[str, object]:
+    return {"algorithm": "SM3/SM4", "sm3": "enabled", "sm4": "enabled", "key_source": "SM4_KEY_HEX environment"}

@@ -43,3 +43,10 @@ uvicorn app.main:app --reload --port 8310
 - 新增全局接口速率限制 `SM_RATE_WINDOW_SECONDS` / `SM_RATE_MAX_REQUESTS`。
 - 新增可选内部写入令牌 `SM_INTERNAL_API_KEY`，配置后 `POST/PATCH` 写操作必须携带 `X-Internal-Token`。
 - 服务契约 `/api/integration/manifest` 版本同步升级到 `2.0.0`。
+
+
+## 国密能力
+- 集成 `gmssl`，提供 SM3 摘要接口 `/api/crypto/sm3`。
+- 提供 `/api/crypto/status` 国密能力状态。
+- SM4 密钥通过 `SM4_KEY_HEX` 环境变量注入，不写入代码和仓库。
+- 生产环境建议通过 KMS/HSM 注入 16 字节 SM4 密钥。

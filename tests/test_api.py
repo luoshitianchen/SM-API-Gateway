@@ -65,3 +65,13 @@ def test_internal_write_token_is_enforced(monkeypatch):
         assert blocked.status_code == 403
         allowed = client.post('/api/items', headers={'X-Internal-Token': 'TOKEN'}, json={'name': 'allowed'})
         assert allowed.status_code == 201
+
+
+
+def test_sm3_crypto_endpoint():
+    with TestClient(app) as client:
+        response = client.post('/api/crypto/sm3', json={'value': 'enterprise'})
+        assert response.status_code == 200
+        assert response.json()['algorithm'] == 'SM3'
+        assert len(response.json()['digest']) == 64
+        assert client.get('/api/crypto/status').json()['sm4'] == 'enabled'
