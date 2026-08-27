@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import os
+import secrets
+import threading
 import time
 import uuid
 from datetime import UTC, datetime
@@ -15,9 +17,11 @@ VERSION = "2.1.0"
 SERVICE_NAME = "sm-api-gateway"
 DISPLAY_NAME = "SM API Gateway"
 DESCRIPTION = "企业 API 网关：鉴权、限流、熔断、灰度与请求审计"
+ENVIRONMENT = os.getenv("SM_ENV", "development").lower()
 ALLOWED_HOSTS = [h.strip() for h in os.getenv("SM_ALLOWED_HOSTS", "localhost,127.0.0.1,testserver").split(",") if h.strip()]
 REQUESTS = {"total": 0, "errors": 0, "latency_ms_total": 0.0}
 RATE_BUCKETS: dict[str, tuple[int, int]] = {}
+rate_limit_lock = threading.Lock()
 MAX_REQUEST_BYTES = int(os.getenv("SM_MAX_REQUEST_BYTES", "1048576"))
 RATE_WINDOW_SECONDS = int(os.getenv("SM_RATE_WINDOW_SECONDS", "60"))
 RATE_MAX_REQUESTS = int(os.getenv("SM_RATE_MAX_REQUESTS", "600"))
@@ -27,22 +31,23 @@ INTEGRATION_EVENTS = ["health.checked", "resource.changed", "audit.recorded"]
 
 
 def check_rate_limit(key: str) -> bool:
-    current = int(time.time())
-    for bucket_key, (started, _) in list(RATE_BUCKETS.items()):
+    with rate_limit_lock:
+        current = int(time.time())
+        for bucket_key, (started, _) in list(RATE_BUCKETS.items()):
+            if current - started >= RATE_WINDOW_SECONDS:
+                RATE_BUCKETS.pop(bucket_key, None)
+        started, count = RATE_BUCKETS.get(key, (current, 0))
         if current - started >= RATE_WINDOW_SECONDS:
-            RATE_BUCKETS.pop(bucket_key, None)
-    started, count = RATE_BUCKETS.get(key, (current, 0))
-    if current - started >= RATE_WINDOW_SECONDS:
-        started, count = current, 0
-    if count >= RATE_MAX_REQUESTS:
-        return False
-    RATE_BUCKETS[key] = (started, count + 1)
-    return True
+            started, count = current, 0
+        if count >= RATE_MAX_REQUESTS:
+            return False
+        RATE_BUCKETS[key] = (started, count + 1)
+        return True
 
 def internal_write_allowed(request: Request) -> bool:
     if not INTERNAL_API_KEY:
-        return True
-    return request.headers.get("X-Internal-Token") == INTERNAL_API_KEY
+        return False
+    return secrets.compare_digest(request.headers.get("X-Internal-Token", ""), INTERNAL_API_KEY)
 
 
 def sm3_hex(value: str) -> str:
@@ -107,6 +112,8 @@ async def security_headers(request: Request, call_next):
     response.headers["Referrer-Policy"] = "no-referrer"
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
     response.headers["Content-Security-Policy"] = "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+    if ENVIRONMENT == "production":
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     response.headers["Cache-Control"] = "no-store" if request.url.path.startswith("/api/") else "no-cache"
     return response
 
