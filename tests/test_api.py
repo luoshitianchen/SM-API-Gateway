@@ -11,13 +11,15 @@ def test_health_and_security_headers():
         assert response.json()['version'] == '2.1.0'
 
 
-def test_overview_and_item_lifecycle():
+def test_overview_and_item_lifecycle(monkeypatch):
+    from app import main
+    monkeypatch.setattr(main, 'INTERNAL_API_KEY', 'TEST')
     with TestClient(app) as client:
         overview = client.get('/api/overview').json()
         assert overview['total'] >= 2
-        created = client.post('/api/items', json={'name': '企业级测试资源', 'owner': '测试部', 'priority': 'P2'}).json()
+        created = client.post('/api/items', headers={'X-Internal-Token': 'TEST'}, json={'name': '企业级测试资源', 'owner': '测试部', 'priority': 'P2'}).json()
         assert created['status'] == 'active'
-        updated = client.patch(f"/api/items/{created['id']}/status?item_status=review")
+        updated = client.patch(f"/api/items/{created['id']}/status?item_status=review", headers={'X-Internal-Token': 'TEST'})
         assert updated.status_code == 200
         assert updated.json()['status'] == 'review'
 
