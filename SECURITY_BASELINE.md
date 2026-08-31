@@ -1,45 +1,28 @@
-# 企业安全基线
+# 安全基线
 
-本项目按企业内部系统默认安全要求维护，适用于本地、服务器和容器化部署。
+本文件定义 SM-API-Gateway 的安全基线控制项与部署建议。
 
-## 访问控制
+## 控制项
 
-- 业务接口不得信任客户端传入的用户身份。
-- 管理接口应接入 IAM、ERP 或企业 SSO。
-- 默认启用角色、部门、岗位和数据范围授权模型。
+| 控制项 | 状态 | 说明 |
+|---|---|---|
+| 安全响应头 | ✅ 已启用 | X-Content-Type-Options / X-Frame-Options / Referrer-Policy / Permissions-Policy / CSP |
+| HSTS | ✅ 生产启用 | 生产环境返回 Strict-Transport-Security |
+| TrustedHost | ✅ 已启用 | 仅允许配置的主机访问 |
+| 请求体大小限制 | ✅ 已启用 | 默认 1 MiB，超限返回 413 |
+| 接口速率限制 | ✅ 已启用 | 默认 600 次/分钟，超限返回 429 |
+| 内部写入令牌 | ✅ 可选 | 配置后写接口必须携带 X-Internal-Token |
+| JWT 鉴权 | ✅ 可选 | 配置后受保护接口要求 Bearer JWT |
+| 国密 SM3 | ✅ 已启用 | 摘要接口与审计完整性 |
+| 国密 SM4 | ✅ 已启用 | 加密使用 SM4-CBC + SM3 MAC，防篡改 |
+| 密钥注入 | ✅ 环境变量 | SM4_KEY_HEX 仅环境/KMS，禁止落库 |
+| 审计落库 | ✅ 已启用 | 本地持久化 + 异步转发集中审计中心 |
+| 容器加固 | ✅ 已启用 | 只读根文件系统、能力剥离、非 root、进程限制 |
 
-## 网络暴露
+## 部署建议
 
-- 默认仅建议绑定内网地址或由 API Gateway 统一转发。
-- 生产环境必须配置允许访问的域名或网关地址。
-- 不建议服务直接裸露到公网入口。
-
-## 安全响应头
-
-服务应保持以下响应头：
-
-- X-Content-Type-Options: nosniff
-- X-Frame-Options: DENY
-- Referrer-Policy: no-referrer
-- Permissions-Policy
-- Content-Security-Policy
-- X-Request-Id
-
-## 审计与日志
-
-- 管理操作、登录、权限变更、数据导入导出必须记录审计日志。
-- 日志中不得写入密码、Token、Cookie、密钥、身份证号等敏感信息。
-- 每个请求应带有追踪 ID，便于跨服务排查。
-
-## 依赖与供应链
-
-- 依赖固定在 equirements.txt。
-- 部署快照记录在 equirements.lock。
-- GitHub Actions 使用最新主版本。
-- 建议开启 Dependabot、CodeQL、Gitleaks、依赖漏洞扫描。
-
-## 发布要求
-
-- 每次正式发布必须更新 VERSION 和 CHANGELOG.md。
-- Release 包应由 CI 自动生成。
-- 生产部署前必须通过测试、依赖扫描和 Secret 扫描。
+- 生产环境通过 KMS/HSM 注入 SM4 密钥与内部令牌。
+- 服务置于企业 VPN 或零信任网关之后，不直接暴露公网。
+- 启用 HTTPS 并配置 HSTS。
+- 接入集中审计中心，保留审计日志至少 365 天。
+- 使用 Kubernetes 时采用非 root、只读根文件系统、seccomp 与 NetworkPolicy。

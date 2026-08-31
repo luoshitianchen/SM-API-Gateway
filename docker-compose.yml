@@ -4,6 +4,13 @@ services:
     ports: ["127.0.0.1:8310:8310"]
     environment:
       SM_ALLOWED_HOSTS: app,localhost,127.0.0.1
+      SM_ENV: production
+      SM4_KEY_HEX: ${SM4_KEY_HEX:-}
+      SM_INTERNAL_API_KEY: ${SM_INTERNAL_API_KEY:-}
+      SM_AUDIT_CENTER_URL: ${SM_AUDIT_CENTER_URL:-}
+      SM_DATABASE_PATH: /data/service.db
+    volumes:
+      - ./data:/data
     restart: unless-stopped
     read_only: true
     tmpfs: ["/tmp:rw,noexec,nosuid,size=32m"]

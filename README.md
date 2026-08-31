@@ -1,6 +1,6 @@
-# SM API Gateway
+# SM-API-Gateway
 
-企业 API 网关：鉴权、限流、熔断、灰度与请求审计。
+企业 API 网关：路由、鉴权、限流、熔断、灰度与请求审计。
 
 ## 本地运行
 
@@ -17,51 +17,30 @@ uvicorn app.main:app --reload --port 8310
 
 ## 企业能力
 
-- `/health` 健康探针
-- `/readyz` 就绪探针
-- `/api/overview` 业务概览
-- `/api/items` 资源管理样例
-- `/api/ops/metrics` 运维指标
-- 安全响应头、CSP、TrustedHost
+- 动态路由
+- 熔断器
+- 灰度权重
+- 请求审计
+- `/health` 健康探针、`/readyz` 就绪探针
+- `/api/overview` 业务概览、`/api/ops/metrics` 运维指标、`/metrics` Prometheus 指标
+- `/api/integration/manifest` 服务契约、`/api/security/baseline` 安全基线
+- 国密 SM3 / SM4-CBC（带 SM3 MAC 完整性校验，防密文篡改）
+- 安全响应头、CSP、TrustedHost、限流、请求体限制、内部写入令牌
+- 审计事件本地落库并异步转发集中审计中心
 - Docker 只读文件系统、能力剥离、进程限制
-- GitHub Actions CI 与安全扫描
+- GitHub Actions CI 与安全扫描（pip-audit / bandit / ruff / SBOM / gitleaks）
+
+## 安全说明
+
+- SM4 密钥仅允许通过环境变量 `SM4_KEY_HEX`（或企业 KMS/HSM）注入，禁止写入代码或数据库。
+- 生产环境（`SM_ENV=production`）未配置任何凭据时，受保护接口一律拒绝（fail-closed）。
+- 写接口必须携带 `X-Internal-Token`（对应 `SM_INTERNAL_API_KEY`）。
 
 ## 质量门禁
 
 ```powershell
 .\quality.ps1
 ```
-
-
-## v1.1 链路联动升级
-- 新增 `/api/integration/manifest`，向融合门户和治理系统声明服务依赖、事件类型、健康探针、指标接口和概览接口。
-- 版本升级到 `1.1.0`，用于后续统一身份、审计、监控、CMDB 和 AgentOps 的真实链路调用。
-
-
-## v2.0 大版本安全升级
-- 新增全局请求体大小限制 `SM_MAX_REQUEST_BYTES`。
-- 新增全局接口速率限制 `SM_RATE_WINDOW_SECONDS` / `SM_RATE_MAX_REQUESTS`。
-- 新增可选内部写入令牌 `SM_INTERNAL_API_KEY`，配置后 `POST/PATCH` 写操作必须携带 `X-Internal-Token`。
-- 服务契约 `/api/integration/manifest` 版本同步升级到 `2.0.0`。
-
-
-## 国密能力
-- 集成 `gmssl`，提供 SM3 摘要接口 `/api/crypto/sm3`。
-- 提供 `/api/crypto/status` 国密能力状态。
-- SM4 密钥通过 `SM4_KEY_HEX` 环境变量注入，不写入代码和仓库。
-- 生产环境建议通过 KMS/HSM 注入 16 字节 SM4 密钥。
-
-
-## v2.1 平台重建升级
-- 新增 `/api/security/baseline` 安全基线接口。
-- 统一输出 TrustedHost、CSP、限流、请求体限制、SM3、SM4 和内部令牌状态。
-- 增加 Kubernetes 安全部署建议，生产环境建议使用非 root、只读文件系统、seccomp 和能力剥离。
-
-
-## 2026-08-22 维护记录
-- 完成源码编译检查、单元测试和工作区状态检查。
-- 保持安全响应头、TrustedHost、限流、请求大小限制、国密 SM3/SM4 与内部令牌控制。
-- 维护建议：生产环境通过 KMS/HSM 注入密钥，依赖项目全部启动后再执行融合门户整体健康检查。
 
 ## 企业维护资料
 
@@ -71,5 +50,3 @@ uvicorn app.main:app --reload --port 8310
 - [生产部署检查清单](DEPLOYMENT_CHECKLIST.md)
 - [变更记录](CHANGELOG.md)
 - [版本号](VERSION)
-- [依赖锁定](requirements.lock)
-

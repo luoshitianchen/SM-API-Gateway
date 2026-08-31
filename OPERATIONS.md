@@ -1,26 +1,22 @@
 # 运维与可观测性
 
-## 标准检查接口
+## 运行指标
 
-- /health：服务存活检查。
-- /readyz：服务就绪检查。
-- /api/ops/metrics：业务级指标快照。
-- /api/crypto/status：国密能力状态。
+- `GET /api/ops/metrics`：请求总量、错误总量、平均延迟。
+- `GET /metrics`：Prometheus 文本指标（`sm_api-gateway_requests_total` 等）。
 
-## 推荐监控项
+## 健康检查
 
-- 请求总量、错误数、平均延迟。
-- 登录失败次数、权限拒绝次数。
-- 数据导入导出次数。
-- 依赖扫描结果、Secret 扫描结果、CI 测试结果。
+- `GET /health`：存活探针（含数据库状态）。
+- `GET /readyz`：就绪探针（运行时 / 配置 / 数据库 / 密钥注入状态）。
 
-## 告警建议
+## 日志
 
-- 健康检查连续失败 3 次告警。
-- 5xx 错误率超过 1% 告警。
-- 平均延迟超过 1000ms 告警。
-- 检测到 Secret 或高危依赖漏洞时阻断发布。
+- 结构化 JSON 请求日志（请求 ID、方法、路径、状态、耗时）。
+- 通过 `X-Request-Id` / `X-Trace-Id` 关联全链路。
 
-## 企业联动
+## 建议
 
-建议由 SM-Fusion-Platform 统一聚合各项目健康、指标、发布和风险状态。
+- 生产接入 Prometheus + Grafana 采集 `/metrics`。
+- 通过融合门户 /api/integration/check 做整体链路巡检。
+- 日志与审计事件统一归档至集中审计中心。
