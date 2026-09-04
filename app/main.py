@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field
 from app import base
 
 SERVICE = "sm-api-gateway"
-VERSION = "2.0.0"
+VERSION = "2.0.1"
 NAME = "SM API Gateway"
 DESCRIPTION = "企业 API 网关：路由、上游代理、限流、访问日志与安全校验"
 PORT = 8310
@@ -160,12 +160,31 @@ def _iso_from_ts(ts: float) -> str:
     return datetime.fromtimestamp(ts, tz=UTC).isoformat()
 
 
+def _call_portal_validate(api_key: str) -> bool:
+    """真实回调开发者门户校验 API Key（哈希匹配）；未配置门户或调用失败一律拒绝。"""
+    portal = os.getenv("SM_API_PORTAL_URL", "")
+    if not portal or not api_key:
+        return False
+    try:
+        import json as _json
+        import urllib.request as _ur
+
+        body = _json.dumps({"api_key": api_key}).encode("utf-8")
+        req = _ur.Request(
+            portal.rstrip("/") + "/api/portal/keys/validate",
+            data=body,
+            headers={"Content-Type": "application/json", "X-Internal-Token": base.internal_api_key()},
+            method="POST",
+        )
+        with _ur.urlopen(req, timeout=2) as resp:  # noqa: S310 (受控内部调用)
+            return resp.status == 200
+    except Exception:
+        return False
+
+
 def _validate_api_key(api_key: str) -> bool:
-    """调用开发者门户校验 API Key（未配置时按服务发现降级：本地校验 HMAC 前缀）。"""
-    if os.getenv("SM_API_PORTAL_URL", ""):
-        # 生产环境通过内部服务发现调用；此处保留可扩展点
-        return True
-    return api_key.startswith("smk_") and len(api_key) >= 20
+    """API Key 校验：仅接受开发者门户的哈希匹配结果；未配置门户时 fail-closed，不做前缀/长度弱校验。"""
+    return _call_portal_validate(api_key)
 
 
 @app.get("/api/gateway/requests")

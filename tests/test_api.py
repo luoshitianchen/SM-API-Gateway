@@ -10,9 +10,14 @@ from app.main import VERSION, app
 @pytest.fixture()
 def client(monkeypatch):
     monkeypatch.setattr(base, "internal_api_key", lambda: "TEST")
+    import app.main as m
+
+    # 保存真实校验函数，供 fail-closed 用例恢复使用
+    m._REAL_PORTAL_VALIDATE = m._call_portal_validate
+    # 模拟已配置开发者门户：仅接受 smk_valid_ 前缀的真实密钥（哈希匹配由门户负责）
+    monkeypatch.setattr(m, "_call_portal_validate", lambda key: key.startswith("smk_valid_"))
     base.reset_state()
-    from app.main import _init as init_db
-    init_db()
+    m._init()
     with TestClient(app) as c:
         c.headers["X-Internal-Token"] = "TEST"
         yield c
@@ -41,10 +46,24 @@ def test_proxy_requires_auth_key(client):
     _route(client)
     # 默认 auth_required=1，无 API Key → 401
     assert client.post("/api/gateway/proxy", json={"path": "/api/orders", "method": "GET"}).status_code == 401
-    # 有效 Key → 200 并记录访问日志
+    # 有效 Key（门户哈希匹配）→ 200 并记录访问日志
     resp = client.post("/api/gateway/proxy", json={"path": "/api/orders", "method": "GET"}, headers={"X-Api-Key": "smk_valid_key_1234567890"})
     assert resp.status_code == 200
     assert client.get("/api/gateway/requests").json()["total"] == 1
+    # 无效 Key（门户哈希不匹配）→ 401
+    assert client.post("/api/gateway/proxy", json={"path": "/api/orders", "method": "GET"}, headers={"X-Api-Key": "smk_forged_key_abcdefghijkl"}).status_code == 401
+
+
+def test_proxy_fail_closed_without_portal(client, monkeypatch):
+    """未配置开发者门户时网关必须 fail-closed：任何 X-Api-Key（含伪造 smk_ 前缀）一律拒绝。"""
+    import app.main as m
+
+    monkeypatch.delenv("SM_API_PORTAL_URL", raising=False)
+    monkeypatch.setattr(m, "_call_portal_validate", m._REAL_PORTAL_VALIDATE)
+    _route(client)
+    for forged in ("smk_" + "a" * 30, "smk_forged_key_1234567890", "smk_x"):
+        r = client.post("/api/gateway/proxy", json={"path": "/api/orders", "method": "GET"}, headers={"X-Api-Key": forged})
+        assert r.status_code == 401, f"未配置门户时应拒绝伪造 Key {forged[:12]}..., got {r.status_code}"
 
 
 def test_proxy_allowlist(client):
