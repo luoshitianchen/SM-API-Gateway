@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field
 from app import base
 
 SERVICE = "sm-api-gateway"
-VERSION = "2.0.1"
+VERSION = "3.0.0"
 NAME = "SM API Gateway"
 DESCRIPTION = "企业 API 网关：路由、上游代理、限流、访问日志与安全校验"
 PORT = 8310

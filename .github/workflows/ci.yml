@@ -11,4 +11,6 @@ jobs:
       - run: ruff check app tests
       - run: pytest tests -q --cov=app --cov-report=term-missing --cov-fail-under=70
       - run: python -m compileall -q app
+      - run: python -m pip_audit -r requirements.txt
+      - run: python -c "import json,os; assert os.path.exists('sbom.json'); d=json.load(open('sbom.json')); assert d.get('bomFormat')=='CycloneDX' and d['components']; print(f\"SBOM OK: {len(d['components'])} components\")"
       - run: docker compose config

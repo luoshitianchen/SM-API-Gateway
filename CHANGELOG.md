@@ -1,10 +1,13 @@
 # Changelog
 
+## 3.0.0 - 2026-09-05
+
+- 大版本 3.0.0：全平台版本统一；新增 SBOM（CycloneDX 1.5）物料清单；CI 增加依赖审计（pip-audit）与 SBOM 完整性校验；补全平台级部署文档与编排入口。
+
+
 ## 2.0.1 - 2026-09-04
 
 - 安全加固：API Key 校验不再前缀/长度弱校验；未配置开发者门户时 fail-closed 拒绝，配置后真实回调门户 /api/portal/keys/validate 哈希匹配。
-
-# Changelog
 
 ## 2.0.0 - 2026-08-31
 
