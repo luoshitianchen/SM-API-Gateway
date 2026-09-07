@@ -176,7 +176,7 @@ def _call_portal_validate(api_key: str) -> bool:
             headers={"Content-Type": "application/json", "X-Internal-Token": base.internal_api_key()},
             method="POST",
         )
-        with _ur.urlopen(req, timeout=2) as resp:  # noqa: S310 (受控内部调用)
+        with _ur.urlopen(req, timeout=2) as resp:  # noqa: S310 (受控内部调用)  # nosec B310  # 审计转发至受控内部URL，带X-Internal-Token认证
             return resp.status == 200
     except Exception:
         return False
@@ -204,5 +204,5 @@ def stats() -> dict[str, Any]:
             "routes": _count("SELECT COUNT(*) FROM routes"),
             "enabled_routes": _count("SELECT COUNT(*) FROM routes WHERE enabled=1"),
             "requests": _count("SELECT COUNT(*) FROM requests_log"),
-            "last_5_min": _count(f"SELECT COUNT(*) FROM requests_log WHERE created_at>='{_iso_from_ts(datetime.now(UTC).timestamp() - 300)}'"),
+            "last_5_min": _count(f"SELECT COUNT(*) FROM requests_log WHERE created_at>='{_iso_from_ts(datetime.now(UTC).timestamp() - 300)}'"),  # nosec B608  # SQL片段为程序生成，用户输入已参数化
         }

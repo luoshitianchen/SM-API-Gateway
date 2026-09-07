@@ -285,7 +285,7 @@ def _forward_audit(event: dict[str, Any]) -> None:
             headers={"Content-Type": "application/json", "X-Internal-Token": internal_api_key()},
             method="POST",
         )
-        _ur.urlopen(req, timeout=2)
+        _ur.urlopen(req, timeout=2)  # nosec B310  # 审计转发至受控内部URL，带X-Internal-Token认证
     except Exception:
         _logger.debug("audit forward failed", exc_info=True)
 
