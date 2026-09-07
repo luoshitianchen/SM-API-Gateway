@@ -3,4 +3,4 @@ coverage==7.9.2
 pytest-cov==6.2.1
 pip-audit==2.9.2
 bandit==1.8.6
-cyclonedx-bom==5.5.3
+cyclonedx-bom==7.3.1
