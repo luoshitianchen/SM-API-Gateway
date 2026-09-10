@@ -1,6 +1,6 @@
-ruff==0.16.6
-coverage==7.16.0
-pytest-cov==7.1.0
-pip-audit==2.9.2
-bandit==1.9.4
-cyclonedx-bom==7.3.1
+pytest==9.1.1
+pytest-asyncio==0.25.0
+httpx==0.28.1
+bandit==1.8.2
+ruff==0.9.3
+pytest-cov==6.0.0

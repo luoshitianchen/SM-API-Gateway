@@ -1,16 +1,21 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
-name = "SM-API-Gateway"
-version = "2.0.0"
-description = "企业 API 网关：路由、鉴权、限流、熔断、灰度与请求审计"
+name = "sm-service"
+version = "1.0.0"
 requires-python = ">=3.11"
 
 [tool.ruff]
-line-length = 200
+line-length = 120
 target-version = "py311"
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "UP", "B", "SIM"]
-ignore = ["E501"]
+select = ["E", "F", "I", "W", "UP", "B", "SIM"]
+ignore = ["E501", "B008"]
 
 [tool.pytest.ini_options]
+asyncio_mode = "auto"
 testpaths = ["tests"]
+addopts = "-v --tb=short"
