@@ -1,0 +1,46 @@
+groups:
+- name: sm-api-gateway-alerts
+  rules:
+  - alert: SMAPIGatewayServiceDown
+    expr: up{job="sm-api-gateway"} == 0
+    for: 1m
+    labels:
+      severity: Critical
+      service: sm-api-gateway
+    annotations:
+      summary: '{{ $labels.instance }} SM API Gateway 服务不可用'
+      description: SM API Gateway（sm-api-gateway）的 up 指标已连续 1 分钟为 0，目标实例可能已宕机或无法被
+        Prometheus 抓取。
+  - alert: SMAPIGatewayHighErrorRate
+    expr: sum(rate(sm_api_gateway_http_requests_total{status=~"5.."}[5m])) / sum(rate(sm_api_gateway_http_requests_total[5m]))
+      > 0.05
+    for: 5m
+    labels:
+      severity: Warning
+      service: sm-api-gateway
+    annotations:
+      summary: SM API Gateway 5xx 错误率超过 5%
+      description: SM API Gateway（sm-api-gateway）过去 5 分钟 5xx 响应占比 超过 5%（当前值 {{ $value
+        | humanizePercentage }}），请检查上游依赖与错误日志。
+  - alert: SMAPIGatewayHighLatency
+    expr: (sum(rate(sm_api_gateway_latency_ms_total[5m])) / sum(rate(sm_api_gateway_requests_total[5m])))
+      > 1000
+    for: 5m
+    labels:
+      severity: Warning
+      service: sm-api-gateway
+    annotations:
+      summary: SM API Gateway 请求平均延迟超过 1s
+      description: SM API Gateway（sm-api-gateway）过去 5 分钟请求平均延迟 （rate(latency_ms_total)/rate(requests_total)）超过
+        1000ms（当前 {{ $value | humanize }} ms）。注：该服务未暴露延迟直方图，此处用平均延迟近似 p99 高延迟告警。
+  - alert: SMAPIGatewayHighMemoryUsage
+    expr: sum(container_memory_working_set_bytes{pod=~"sm-api-gateway-.*", container!="",
+      container!="POD"}) by (pod) > 536870912
+    for: 5m
+    labels:
+      severity: Warning
+      service: sm-api-gateway
+    annotations:
+      summary: SM API Gateway 进程内存超过 512MB
+      description: '{{ $labels.pod }} 容器工作集内存超过 512MiB（当前 {{ $value | humanize1024
+        }B），SM API Gateway（sm-api-gateway）存在内存泄漏或 OOM 风险，请排查。'
