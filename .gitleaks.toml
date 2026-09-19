@@ -1,0 +1,14 @@
+﻿# Gitleaks allowlist: test files and known test patterns
+[allowlist]
+  description = "Allow test files and known test credentials"
+  paths = [
+    '''tests/''',
+    '''test_''',
+    '''conftest.py''',
+  ]
+  regexes = [
+    '''test-internal-key-\d+''',
+    '''test-jwt-secret-for-testing-only-\d+''',
+    '''TestPass\d+''',
+    '''ChangeMe\d+!''',
+  ]
