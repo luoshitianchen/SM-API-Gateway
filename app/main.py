@@ -11,7 +11,7 @@ from app.core.config import settings
 from app.core.database import init_db
 from app.core.logging import setup_logging
 from app.core.middleware import SecurityMiddleware
-from app.routers import crypto, gateway, health, items, meta, metrics
+from app.routers import crypto, gateway, health, items, meta, metrics, proxy
 
 setup_logging()
 
@@ -23,6 +23,9 @@ async def lifespan(app: FastAPI):
     yield
     from app.core.database import engine
     await engine.dispose()
+    # 释放代理转发的 httpx 连接池
+    from app.services.proxy import close_client
+    await close_client()
 
 
 app = FastAPI(
@@ -46,6 +49,7 @@ app.include_router(gateway.routes_router)
 app.include_router(gateway.ratelimit_router)
 app.include_router(gateway.apikey_router)
 app.include_router(gateway.upstream_router)
+app.include_router(proxy.proxy_router)
 
 
 
