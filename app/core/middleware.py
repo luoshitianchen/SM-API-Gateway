@@ -9,7 +9,7 @@ from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.core.config import settings
-from app.core.security import PUBLIC_PATHS, authorized, check_rate_limit
+from app.core.security import PUBLIC_PATH_PREFIXES, PUBLIC_PATHS, authorized, check_rate_limit
 from app.routers.metrics import record_request
 
 REQUEST_STATS = {"total": 0, "errors": 0, "latency_ms_total": 0.0}
@@ -26,7 +26,8 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         request.state.trace_id = trace_id[:64]
 
         path = request.url.path
-        if path.startswith("/api/") and path not in PUBLIC_PATHS and not authorized(request):
+        _public = path in PUBLIC_PATHS or any(path.startswith(p) for p in PUBLIC_PATH_PREFIXES)
+        if path.startswith("/api/") and not _public and not authorized(request):
             response = Response(status_code=401, content="认证无效")
         else:
             content_length = request.headers.get("content-length")

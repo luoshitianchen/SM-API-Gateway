@@ -154,6 +154,9 @@ PUBLIC_PATHS = {
     "/api/ops/metrics", "/api/integration/manifest", "/api/security/baseline",
 }
 
+# 业务域读操作放行前缀：GET 读请求免认证，写操作由服务层 X-Internal-Token 拦截
+PUBLIC_PATH_PREFIXES = {"/api/gateway/"}
+
 
 def authorized(request: Request) -> bool:
     """请求认证检查：内部令牌直通，否则校验 Bearer JWT。"""
