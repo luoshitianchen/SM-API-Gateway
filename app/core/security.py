@@ -162,7 +162,13 @@ def authorized(request: Request) -> bool:
     """请求认证检查：内部令牌直通，否则校验 Bearer JWT。"""
     if internal_write_allowed(request):
         return True
-    if not (settings.JWT_SECRET or settings.INTERNAL_API_KEY):
+    # 业务域 GET 读操作按设计放行（PUBLIC_PATH_PREFIXES）；写操作由服务层令牌校验
+    if request.method == "GET" and any(
+        request.url.path.startswith(p) for p in PUBLIC_PATH_PREFIXES
+    ):
         return True
+    # fail-closed：密钥未配置时，除显式放行的 GET 外一律拒绝
+    if not (settings.JWT_SECRET or settings.INTERNAL_API_KEY):
+        return False
     authorization = request.headers.get("Authorization", "")
     return authorization.startswith("Bearer ") and verify_jwt(authorization[7:]) is not None
