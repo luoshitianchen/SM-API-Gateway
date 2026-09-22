@@ -1,0 +1,11 @@
+apiVersion: v2
+name: sm-api-gateway
+description: API 网关 Helm Chart（SM 企业级微服务部署资产）
+type: application
+version: 1.0.0
+appVersion: "2.1.0"
+keywords:
+  - sm-microservices
+  - enterprise
+maintainers:
+  - name: sm-platform-team

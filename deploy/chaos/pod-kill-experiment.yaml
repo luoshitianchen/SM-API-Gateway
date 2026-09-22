@@ -1,0 +1,16 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: PodChaos
+metadata:
+  name: sm-api-gateway-pod-kill
+  namespace: sm-prod
+spec:
+  action: pod-kill
+  mode: one
+  selector:
+    namespaces:
+      - sm-prod
+    labelSelectors:
+      app.kubernetes.io/instance: sm-api-gateway
+      app.kubernetes.io/name: sm-api-gateway
+  scheduler:
+    cron: '@every 30m'

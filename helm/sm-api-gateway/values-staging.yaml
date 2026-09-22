@@ -1,0 +1,27 @@
+# sm-api-gateway staging 环境覆盖
+replicaCount: 2
+image:
+  tag: staging
+config:
+  SM_ENV: staging
+  SM_LOG_LEVEL: info
+ingress:
+  hosts:
+    - host: sm-api-gateway.staging.sm.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: sm-staging-tls
+      hosts:
+        - sm-api-gateway.staging.sm.example.com
+hpa:
+  minReplicas: 2
+  maxReplicas: 5
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
