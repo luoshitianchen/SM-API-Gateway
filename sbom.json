@@ -14,8 +14,8 @@
     {
       "type": "library",
       "name": "fastapi",
-      "version": "0.159.1",
-      "purl": "pkg:pypi/fastapi@0.159.1"
+      "version": "0.162.5",
+      "purl": "pkg:pypi/fastapi@0.162.5"
     },
     {
       "type": "library",
